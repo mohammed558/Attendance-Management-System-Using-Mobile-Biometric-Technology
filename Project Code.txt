@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body class="text-center">
+      <nav class="navbar navbar navbar-dark bg-primary">
+        <a class="navbar-brand" href="main.html">
+          <img src="imgs/main.png" width="40" height="40" class="d-inline-block" alt="">
+          Mark Attendance
+        </a>
+        <p class="navbar-brand user" >Logged User</p>
+      </nav>
+    <h2>Lecture Attendance</h2>
+    <table class="table table-hover" id="lectureTable">
+        <thead class="thead-light">
+        <tr>
+            <th>Lecture Name</th>
+            <th>Lecture Time</th>
+            <th>Allowed Time(From - To)</th>
+            <th>Mark Attendance</th>
+        </tr>
+        </thead>
+
+    </table>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+  
+        const firebaseConfig = {
+  apiKey: "AIzaSyCRs9tLJYdf5PxzJSO1zQXOgtjA1q01FmQ",
+  authDomain: "attendance-dcb85.firebaseapp.com",
+  databaseURL: "https://attendance-dcb85-default-rtdb.firebaseio.com",
+  projectId: "attendance-dcb85",
+  storageBucket: "attendance-dcb85.appspot.com",
+  messagingSenderId: "493638666720",
+  appId: "1:493638666720:web:d5c29993a8025db0944385"
+};
+  
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        import {
+          getDatabase,
+          ref,
+          set,
+          get,
+          child,
+          update,
+          remove,
+        } 
+        from "https://www.gstatic.com/firebasejs/9.12.1/firebase-database.js";
+  
+        const db = getDatabase();
+        // Example lectures array
+        const lectures = [
+            //{ name: "Lecture 1", start: "16:22", end: "16:32", from:"9-10AM"},
+            //{ name: "Lecture 2", start: "10:00", end: "10:45", from:"10-11AM"},
+            //{ name: "Lecture 3", start: "11:00", end: "11:45", from:"1-2AM"}
+            // Add more lectures as needed up to 10
+        ];
+
+        function populateTable() {
+            const table = document.getElementById('lectureTable');
+            lectures.forEach((lecture, index) => {
+                const row = table.insertRow(-1); // Insert new row at the end of the table
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                const cell4 = row.insertCell(3);
+                cell1.textContent = lecture.name;
+                cell3.textContent = `${lecture.start} - ${lecture.end}`;
+                cell2.textContent = lecture.from;
+                // Add a button for marking attendance
+                const button = document.createElement('button');
+                button.textContent = 'Mark Present';
+                button.onclick = function() { markAttendance(index); };
+                button.id = `btn${index}`;
+                cell4.appendChild(button);
+
+                // Initially disable all buttons
+                button.classList.add('disabled');
+                button.disabled = true;
+            });
+        }
+
+        function updateButtons() {
+            const currentTime = new Date();
+            lectures.forEach((lecture, index) => {
+                const startTime = new Date(currentTime);
+                const endTime = new Date(currentTime);
+                const [startHours, startMinutes] = lecture.start.split(':');
+                const [endHours, endMinutes] = lecture.end.split(':');
+                startTime.setHours(startHours, startMinutes, 0);
+                endTime.setHours(endHours, endMinutes, 0);
+
+                const button = document.getElementById(`btn${index}`);
+                if (currentTime >= startTime && currentTime <= endTime) {
+                    // Highlight and enable the button only if current time is within lecture time
+                    button.classList.remove('disabled');
+                    button.classList.add('highlighted');
+                    button.disabled = false;
+                } else {
+                    // Otherwise, keep it disabled
+                    button.classList.add('disabled');
+                    button.classList.remove('highlighted');
+                    button.disabled = true;
+                }
+            });
+        }
+
+        function markAttendance(index) {
+            const button = document.getElementById(`btn${index}`);
+            button.textContent = 'Present'; // Change button text
+            button.classList.remove('highlighted'); // Remove highlight
+            button.classList.add('disabled'); // Add disabled style
+            button.disabled = true; // Disable the button
+            // Here you would add your logic to send this attendance information to your server
+            console.log(`Marked ${lectures[index].name} as present`);
+            mark_lecture(lectures[index].name,student_id,dateString);
+        }
+
+        function mark_lecture(lec_name,id,a_date) {
+        update(ref(db, "attendance_details/"+ id + "/" + a_date), {
+          [lec_name] : "present"
+        })
+          .then(() => {
+            //alert("Default Created");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+
+        function markData() {
+        update(ref(db, "attendance_details/" ), {
+          student_id : lec_start,
+          lecture_name : lec_end,
+          from :lec_time,
+        })
+          .then(() => {
+            alert("Updated successfully");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const user_Value = urlParams.get('greeting');
+        var student_id = user_Value.split(" ")[1];
+        document.querySelector(".user").innerHTML = user_Value;
+        
+        function getTimestampInSeconds() 
+        {
+            console.log(new Date().toLocaleString());
+        }
+
+        getTimestampInSeconds();
+        getAllDataOnce();
+
+        function getAllDataOnce() {
+        const dbref = ref(db);
+        get(child(dbref, "lecture_details/")).then((snapshot) => {
+          var values = [];
+          snapshot.forEach((childSnapshot) => {
+            values.push(childSnapshot.val());
+          });
+          console.log(values[0]);
+          
+          var i = 0;
+          for (i in values) {
+            console.log(values[i]);
+            lectures.push(values[i])
+            }
+          populateTable();
+          setInterval(updateButtons, 1000); // Update buttons every second
+     
+          fetchData(values);
+        });
+      }
+
+      var currentDate = new Date();
+      var dateString = currentDate.toLocaleDateString();
+      let originalString = dateString
+      dateString = originalString.replaceAll("/", "-");
+      console.log(dateString)
+
+    </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="ATME "/>
+    <meta name="generator" content="Hugo 0.104.2" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
+    <title>Student Login</title>
+
+    <meta name="theme-color" content="#712cf9" />
+    <!-- Custom styles for this template -->
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+  <body class="text-center">
+    <main class="form-signin w-100 m-auto">
+      <form>
+        <img
+          class="mb-4"
+          src="imgs/student.png"
+          alt="logo"
+          width="150"
+          height="150"
+        />
+        <h1 class="h3 mb-3 fw-normal"><strong>Student Login</strong></h1>
+
+        <div class="form-floating">
+          <input
+            type="id"
+            class="form-control"
+            id="floatingInput"
+            placeholder="Student_Id"
+            required
+          />
+          <label for="floatingInput">Student_Id</label>
+        </div>
+        <div class="form-floating">
+          <input
+            type="password"
+            class="form-control"
+            id="floatingPassword"
+            placeholder="Password"
+            required
+          />
+          <label for="floatingPassword">Password</label>
+        </div>
+        <button class="w-100 btn btn-lg btn-primary" type="button">
+          Login in
+        </button>
+        <p class="mt-5 mb-3 text-muted">&copy; 2023–2024</p>
+      </form>
+    </main>
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-app.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+  apiKey: "AIzaSyCRs9tLJYdf5PxzJSO1zQXOgtjA1q01FmQ",
+  authDomain: "attendance-dcb85.firebaseapp.com",
+  databaseURL: "https://attendance-dcb85-default-rtdb.firebaseio.com",
+  projectId: "attendance-dcb85",
+  storageBucket: "attendance-dcb85.appspot.com",
+  messagingSenderId: "493638666720",
+  appId: "1:493638666720:web:d5c29993a8025db0944385"
+};
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      import {
+        getDatabase,
+        ref,
+        set,
+        get,
+        child,
+        update,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-database.js";
+
+      const db = getDatabase();
+
+      //read data
+      function readData() {
+        const dbref = ref(db);
+        get(child(dbref, "student_login_details/"+ student_id)).then((snapshot) => {
+            console.log(snapshot);
+            if(snapshot.exists())
+            {
+                if(snapshot.val().student_id === student_id && snapshot.val().student_pass === upass )
+                {
+                    window.open("main.html?greeting=" + snapshot.val().student_name + " " + student_id, "_self");
+                }
+                else{
+                    alert("Incorrect Details Try Again");
+                    document.querySelector("#floatingInput").value = "";
+                    document.querySelector("#floatingPassword").value = "";
+                }
+            }
+            else
+            {
+              alert("Student Record Not Found!");
+            }
+      })
+    };
+      //get form data
+      var student_id;
+      var upass;
+      
+      document.querySelector(".btn").addEventListener("click", function () {
+        student_id = document.querySelector("#floatingInput").value;
+        upass = document.querySelector("#floatingPassword").value;
+        console.log(student_id,upass)
+        if(student_id.length === 0 || upass.length === 0){
+            alert("Enter Username And Password")
+        }
+        else{
+            readData();
+        }
+      });
+ 
+    </script>
+  </body>
+</html>
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #f5f5f5;
+}
+
+.form-signin {
+  max-width: 330px;
+  padding: 15px;
+}
+
+.form-signin .form-floating:focus-within {
+  z-index: 2;
+}
+
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.bd-placeholder-img {
+  font-size: 1.125rem;
+  text-anchor: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+  }
+}
+
+.b-example-divider {
+  height: 3rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: solid rgba(0, 0, 0, 0.15);
+  border-width: 1px 0;
+  box-shadow: inset 0 0.5em 1.5em rgba(0, 0, 0, 0.1),
+    inset 0 0.125em 0.5em rgba(0, 0, 0, 0.15);
+}
+
+.b-example-vr {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 100vh;
+}
+
+.bi {
+  vertical-align: -0.125em;
+  fill: currentColor;
+}
+
+.nav-scroller {
+  position: relative;
+  z-index: 2;
+  height: 2.75rem;
+  overflow-y: hidden;
+}
+
+.nav-scroller .nav {
+  display: flex;
+  flex-wrap: nowrap;
+  padding-bottom: 1rem;
+  margin-top: -1px;
+  overflow-x: auto;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.b-example-divider {
+  height: 3rem;
+  background-color: rgba(0, 0, 0, .1);
+  border: solid rgba(0, 0, 0, .15);
+  border-width: 1px 0;
+  box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+}
+
+.highlighted {
+    background-color: green; /* Highlight color for active buttons */
+  }
+  .disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+</body>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-app.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      const firebaseConfig = {
+  apiKey: "AIzaSyCRs9tLJYdf5PxzJSO1zQXOgtjA1q01FmQ",
+  authDomain: "attendance-dcb85.firebaseapp.com",
+  databaseURL: "https://attendance-dcb85-default-rtdb.firebaseio.com",
+  projectId: "attendance-dcb85",
+  storageBucket: "attendance-dcb85.appspot.com",
+  messagingSenderId: "493638666720",
+  appId: "1:493638666720:web:d5c29993a8025db0944385"
+};
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      import {
+        getDatabase,
+        ref,
+        set,
+        get,
+        child,
+        update,
+        remove,
+      } 
+      from "https://www.gstatic.com/firebasejs/9.12.1/firebase-database.js";
+
+      const db = getDatabase();
+
+      function getAllDataOnce() {
+        const dbref = ref(db);
+        get(child(dbref, "/")).then((snapshot) => {
+          var values = [];
+          snapshot.forEach((childSnapshot) => {
+            values.push(childSnapshot.val());
+          });
+          console.log(values);
+          //fetchData(values);
+        });
+      }
+
+      //window.onload = inSertData("app application",2,"12:30","1:30","10AM-30AM");
+
+      //   insert data
+      function inSertData(lec_name,lec_num,lec_start,lec_end,lec_time) {
+        update(ref(db, "lecture_details/" + lec_num), {
+          start: lec_start,
+          end: lec_end,
+          from:lec_time,
+          name:lec_name
+
+        })
+          .then(() => {
+            alert("Updated successfully");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+
+      function inAdminData(user_name,user_pass) {
+        update(ref(db, "admin_details"), {
+          user_name:user_name,
+          user_pass:user_pass
+        })
+          .then(() => {
+            alert("Updated successfully");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+      window.onload = inAdminData("admin@gmail.com","pass");
+
+    </script>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="krishna"/>
+    <meta name="generator" content="Hugo 0.104.2" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
+    <title>Document</title>
+</head>
+<body>
+  <nav class="navbar navbar navbar-dark bg-primary">
+    <a class="navbar-brand" href="main.html">
+      <img src="imgs/admin.png" width="40" height="40" class="d-inline-block" alt="">
+      Admin Page
+    </a>
+    <p class="navbar-brand user" >Logged User</p>
+  </nav><br>
+
+ <div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="col-8 col-md-6">
+        <h3 style="text-align: center;;"><strong>Create Student Login</strong></h3>
+        <div class="form-floating">
+          <input
+            type="email"
+            class="form-control"
+            name="email"
+            id="floatingInput"
+            placeholder="name@example.com"
+            required
+          />
+          <label for="floatingInput">Student_Id</label>
+        </div>
+        <div class="form-floating">
+            <input
+              type="id"
+              class="form-control"
+              name="email"
+              id="floatingName"
+              placeholder="12345"
+              required
+            />
+            <label for="floatingName">Student_Name</label>
+          </div>
+        <div class="form-floating">
+          <input
+            type="name"
+            class="form-control"
+            id="floatingPassword"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <label for="floatingPassword">Password</label><br>
+        </div>
+        <button class="create w-100 btn btn-lg btn-primary" type="submit">
+          Create Account
+        </button>
+     </div>
+    </div>
+    <div class="col-md-auto">
+      <h3>Enter Lecture Details</h3>
+
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="lec_id">Id</span>
+        </div>
+        <input type="text" class="lec_id form-control" placeholder="Lecture id" aria-label="Username" aria-describedby="basic-addon1">
+      </div>
+
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="">Name</span>
+        </div>
+        <input type="text" class="lec_name form-control" placeholder="Lecture Name" aria-label="Username" aria-describedby="basic-addon1">
+      </div>
+
+      
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="">Lecture Time</span>
+        </div>
+        <input type="text" class="lec_time form-control" placeholder="Lecture Time" aria-label="Username" aria-describedby="basic-addon1">
+      </div>
+      
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="">Marking Start & End Time</span>
+        </div>
+        <input type="text" class="form-control lec_start">
+        <input type="text" class="form-control lec_end">
+      </div><br>
+      <button class="lec_update w-100 btn btn-lg btn-primary" type="submit">
+        Update
+      </button>
+    </div>
+  </div>
+  </div>
+
+</body>
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-app.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      const firebaseConfig = {
+  apiKey: "AIzaSyCRs9tLJYdf5PxzJSO1zQXOgtjA1q01FmQ",
+  authDomain: "attendance-dcb85.firebaseapp.com",
+  databaseURL: "https://attendance-dcb85-default-rtdb.firebaseio.com",
+  projectId: "attendance-dcb85",
+  storageBucket: "attendance-dcb85.appspot.com",
+  messagingSenderId: "493638666720",
+  appId: "1:493638666720:web:d5c29993a8025db0944385"
+};
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      import {
+        getDatabase,
+        ref,
+        set,
+        get,
+        child,
+        update,
+        remove,
+      } 
+      from "https://www.gstatic.com/firebasejs/9.12.1/firebase-database.js";
+
+      const db = getDatabase();
+
+      function getAllDataOnce() {
+        const dbref = ref(db);
+        get(child(dbref, "/")).then((snapshot) => {
+          var default_values = [];
+          var lectureNames = [];
+          snapshot.forEach((childSnapshot) => {
+            default_values.push(childSnapshot.val());
+          });
+
+          for (var key in default_values[3]) 
+          {
+            var d_stu_id = default_values[3][key]["student_id"];
+            var d_stu_name = default_values[3][key]["student_name"]
+            console.log(d_stu_id,d_stu_name)
+            for (var i in default_values[2])
+            {
+                var lec_name = default_values[2][i]["name"]
+                mark_Default_lecture(lec_name,d_stu_id,dateString);
+                console.log(lec_name)
+            }
+            console.log(default_values[3][key]["student_id"]);
+            console.log(default_values[3][key]["student_name"]);
+            mark_Default_student(dateString,d_stu_id,d_stu_name);
+          }
+
+        //   default_values[1].forEach(lecture => {
+        //     if (lecture !== null) {
+        //         lectureNames.push(lecture.name);
+        //         }
+        //     });
+            //console.log(lectureNames) 
+        });
+    };
+
+      //window.onload = inSertData("app application",2,"12:30","1:30","10AM-30AM");
+
+      //   insert data
+      function inSertData(lec_name,lec_num,lec_start,lec_end,lec_time) {
+        update(ref(db, "lecture_details/" + lec_num), {
+          start: lec_start,
+          end: lec_end,
+          from:lec_time,
+          name:lec_name
+
+        })
+          .then(() => {
+            alert("Updated successfully");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+
+      function inStudentData(id,name,pass) {
+        update(ref(db, "student_login_details/"+id), {
+          student_id:id,
+          student_name:name,
+          student_pass:pass
+        })
+          .then(() => {
+            alert("Student Account Created");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+
+      function mark_Default_student(a_date,id,name) {
+        update(ref(db, "attendance_details/"+ id + "/" + a_date), {
+          student_id:id,
+          student_name:name,
+          attend_date:a_date
+        })
+          .then(() => {
+            //alert("Default Created");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+
+      function mark_Default_lecture(lec_name,id,a_date) {
+        update(ref(db, "attendance_details/"+ id + "/" + a_date), {
+          [lec_name] : "absent"
+        })
+          .then(() => {
+            //alert("Default Created");
+          })
+          .catch((error) => {
+            alert("unsuccessful","Error"+ error);
+          });
+      }
+     
+      //get form data
+      document.querySelector(".create").addEventListener("click", function () {
+        var student_id = document.querySelector("#floatingInput").value;
+        var student_name = document.querySelector("#floatingName").value;
+        var student_pass = document.querySelector("#floatingPassword").value;
+        if(student_id.length === 0 || student_pass.length === 0){
+            alert("Enter Username And Password")
+        }
+        else{
+             inStudentData(student_id,student_name,student_pass);
+        }
+      });
+
+      getAllDataOnce();
+
+      var currentDate = new Date();
+      var dateString = currentDate.toLocaleDateString();
+      let originalString = dateString
+      dateString = originalString.replaceAll("/", "-");
+      console.log(dateString)
+
+      document.querySelector(".lec_update").addEventListener("click", function () {
+        var lec_id = document.querySelector(".lec_id").value;
+        var lec_name = document.querySelector(".lec_name").value;
+        var lec_time = document.querySelector(".lec_time").value;
+        var lec_start = document.querySelector(".lec_start").value;
+        var lec_end = document.querySelector(".lec_end").value;
+        console.log(lec_id,lec_name,lec_time,lec_start,lec_end);
+        if(!lec_start || !lec_end )
+        {
+          alert("enter lecture details");
+        }
+        else
+        {
+          inSertData(lec_name,lec_id,lec_start,lec_end,lec_time)
+        }
+      });
+
+      const urlParams = new URLSearchParams(window.location.search);
+        const user_Value = urlParams.get('greeting');
+        var student_id = user_Value.split(" ")[1];
+        document.querySelector(".user").innerHTML = user_Value;
+      
+
+    </script>    
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="ATME"/>
+    <meta name="generator" content="Hugo 0.104.2" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
+    <title>Admin Login</title>
+
+    <meta name="theme-color" content="#712cf9" />
+    <!-- Custom styles for this template -->
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+  <body class="text-center">
+    <main class="form-signin w-100 m-auto">
+      <form>
+        <img
+          class="mb-4"
+          src="imgs/admin.png"
+          alt="logo"
+          width="150"
+          height="150"
+        />
+        <h1 class="h3 mb-3 fw-normal"><strong>Admin Login</strong></h1>
+
+        <div class="form-floating">
+          <input
+            type="email"
+            class="form-control"
+            id="floatingInput"
+            placeholder="name@example.com"
+            required
+          />
+          <label for="floatingInput">Email address</label>
+        </div>
+        <div class="form-floating">
+          <input
+            type="password"
+            class="form-control"
+            id="floatingPassword"
+            placeholder="Password"
+            required
+          />
+          <label for="floatingPassword">Password</label>
+        </div>
+        <button class="w-100 btn btn-lg btn-primary" type="button">
+          Login in
+        </button>
+        <p class="mt-5 mb-3 text-muted">&copy; 2023–2024</p>
+      </form>
+    </main>
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-app.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+  apiKey: "AIzaSyCRs9tLJYdf5PxzJSO1zQXOgtjA1q01FmQ",
+  authDomain: "attendance-dcb85.firebaseapp.com",
+  databaseURL: "https://attendance-dcb85-default-rtdb.firebaseio.com",
+  projectId: "attendance-dcb85",
+  storageBucket: "attendance-dcb85.appspot.com",
+  messagingSenderId: "493638666720",
+  appId: "1:493638666720:web:d5c29993a8025db0944385"
+};
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      import {
+        getDatabase,
+        ref,
+        set,
+        get,
+        child,
+        update,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/9.12.1/firebase-database.js";
+
+      const db = getDatabase();
+
+      //read data
+      function readData() {
+        const dbref = ref(db);
+        get(child(dbref, "admin_details")).then((snapshot) => {
+            console.log("inside read function");
+            if(snapshot.exists())
+            {
+                if(snapshot.val().user_name === uemail && snapshot.val().user_pass === upass )
+                {
+                    window.open("edit.html?greeting=" + snapshot.val().user_name, "_self");
+                }
+                else{
+                    alert("Incorrect Details Try Again");
+                    document.querySelector("#floatingInput").value = "";
+                    document.querySelector("#floatingPassword").value = "";
+                }
+            }
+      })
+    };
+      //get form data
+      var uemail;
+      var upass;
+      document.querySelector(".btn").addEventListener("click", function () {
+        uemail = document.querySelector("#floatingInput").value;
+        upass = document.querySelector("#floatingPassword").value;
+        if(uemail.length === 0 || upass.length === 0){
+            alert("Enter Username And Password")
+        }
+        else{
+            readData();
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>24-Hour Time Picker</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Datepicker CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+  <h2>24-Hour Time Picker</h2>
+  <div class="form-group">
+    <label for="timepicker">Select Time:</label>
+    <input type="text" class="form-control" id="timepicker">
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<!-- Bootstrap Datepicker JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+  $(document).ready(function(){
+    // Initialize Bootstrap Datepicker
+    $('#timepicker').datepicker({
+      format: 'HH:ii',
+      autoclose: true,
+      todayHighlight: true,
+      startDate: '00:00',
+      endDate: '23:59',
+      startView: 1,
+      minView: 0,
+      maxView: 1,
+      todayBtn: "linked",
+      clearBtn: true,
+      orientation: "bottom auto"
+    });
+  });
+</script>
+
+</body>
+</html>
